@@ -35,7 +35,10 @@
 
             const SHEET_URL = "https://docs.google.com/spreadsheets/d/1_CX7JDm7xl-YGGpyZpZnPfYBKou_-TRjtDaFOg4fsl/edit";
             const DRIVE_FOLDER_URL = "https://drive.google.com/drive/folders/18zV8uClYgd-0eZlja9ul6vkRJq4v0mWh";
-            const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxCMoXBN84xUKUqlnBf_cU6DfwKMZYi-fW-7zPN41YqTca7v3kfbbsqgFx8J1WzQJ6Log/exec";
+            
+            // URL Web App Baharu yang anda berikan
+            const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_nxwy1Q7fcGux6FmKZCLh-rDM4zlwd9Aop_pIvg2Wmsa8joxTUMmtJfo-uNva-RilAA/exec";
+            
             const API_KEY = ""; // Masukkan API Key Gemini jika perlu
 
             const startCamera = async () => {
@@ -60,19 +63,17 @@
                 const dataUrl = canvas.toDataURL('image/png');
                 setImage(dataUrl);
                 
-                // Hentikan kamera
                 const stream = video.srcObject;
-                stream.getTracks().forEach(track => track.stop());
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
                 setIsCameraOpen(false);
 
                 processImage(dataUrl.split(',')[1]);
             };
 
             const processImage = async (base64Data) => {
-                if (!API_KEY) {
-                    console.warn("API Key tiada. AI tidak akan berfungsi.");
-                    return;
-                }
+                if (!API_KEY) return;
                 setLoading(true);
                 try {
                     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`, {
@@ -81,7 +82,7 @@
                         body: JSON.stringify({
                             contents: [{
                                 parts: [
-                                    { text: "Ekstrak tajuk buku dalam Jawi, BM dan BI. Format: [Jawi] | [BM] | [BI]" },
+                                    { text: "Ekstrak tajuk buku ini. Jika ada Jawi, tulis Jawi dahulu diikuti BM/BI. Format: [Jawi] | [BM] | [BI]" },
                                     { inlineData: { mimeType: "image/png", data: base64Data } }
                                 ]
                             }]
@@ -99,18 +100,39 @@
 
             const handleSave = async () => {
                 if (!formData.tajuk) return alert("Sila masukkan tajuk.");
+                if (!image) return alert("Sila ambil gambar terlebih dahulu.");
+                
                 setLoading(true);
+
+                const uniqueId = "ID-" + Math.random().toString(36).substr(2, 6).toUpperCase();
+                const currentDateTime = new Date().toLocaleString('ms-MY');
+                const base64Image = image.split(',')[1];
+
+                // Payload yang dihantar mestilah mengikut turutan yang Apps Script jangkakan
+                const payload = {
+                    id: uniqueId,
+                    tarikh: currentDateTime,
+                    bil: formData.bil,
+                    tajuk: formData.tajuk,
+                    tahun: formData.tahun,
+                    meter: formData.meter,
+                    imageRaw: base64Image
+                };
+
                 try {
+                    // Menghantar data ke Google Apps Script
                     await fetch(SCRIPT_URL, {
                         method: 'POST',
                         mode: 'no-cors',
-                        body: JSON.stringify(formData)
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
                     });
-                    alert("Rekod berjaya disimpan!");
+                    
+                    alert("Rekod & Gambar berjaya dihantar ke Google Sheets!");
                     setFormData({ tajuk: '', tahun: '', bil: '1', meter: '' });
                     setImage(null);
                 } catch (err) {
-                    alert("Ralat simpan data.");
+                    alert("Ralat penghantaran data.");
                 } finally {
                     setLoading(false);
                 }
@@ -118,20 +140,20 @@
 
             return (
                 <div className="min-h-screen pb-12">
-                    <header className="bg-white border-b p-4 flex justify-between items-center sticky top-0 z-20">
+                    <header className="bg-white border-b p-4 flex justify-between items-center sticky top-0 z-20 shadow-sm">
                         <div className="flex items-center gap-2">
                             <i className="fa-solid fa-camera text-red-600 text-xl"></i>
                             <h1 className="font-black uppercase tracking-tighter text-xl">
                                 Kamera <span className="text-red-600">Pelupusan</span>
                             </h1>
                         </div>
-                        <a href={SHEET_URL} target="_blank" className="text-slate-400 hover:text-green-600">
+                        <a href={SHEET_URL} target="_blank" className="text-slate-400 hover:text-green-600 transition-colors">
                             <i className="fa-solid fa-file-excel text-xl"></i>
                         </a>
                     </header>
 
                     <main className="max-w-md mx-auto p-4 space-y-6">
-                        <div className="bg-white rounded-2xl shadow-sm border overflow-hidden relative">
+                        <div className="bg-white rounded-2xl shadow-md border overflow-hidden relative">
                             <div className="aspect-[4/3] bg-slate-100 flex items-center justify-center overflow-hidden">
                                 {isCameraOpen ? (
                                     <video id="video" autoPlay playsInline className="w-full h-full object-cover" />
@@ -145,20 +167,20 @@
                                 )}
                                 
                                 {loading && (
-                                    <div className="absolute inset-0 bg-white/80 flex flex-col items-center justify-center">
+                                    <div className="absolute inset-0 bg-white/90 flex flex-col items-center justify-center z-10">
                                         <div className="loader ease-linear rounded-full border-4 border-t-4 border-slate-200 h-12 w-12 mb-4"></div>
-                                        <p className="font-black text-xs uppercase tracking-widest animate-pulse">Memproses...</p>
+                                        <p className="font-black text-xs uppercase tracking-widest animate-pulse text-slate-600">Sedang Memproses...</p>
                                     </div>
                                 )}
                             </div>
 
                             <div className="p-4">
                                 {!isCameraOpen ? (
-                                    <button onClick={startCamera} className="w-full bg-slate-900 text-white font-black py-4 rounded-xl flex items-center justify-center gap-2">
+                                    <button onClick={startCamera} className="w-full bg-slate-900 text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg shadow-slate-200">
                                         <i className="fa-solid fa-video"></i> BUKA KAMERA
                                     </button>
                                 ) : (
-                                    <button onClick={takePhoto} className="w-full bg-red-600 text-white font-black py-4 rounded-xl flex items-center justify-center gap-2">
+                                    <button onClick={takePhoto} className="w-full bg-red-600 text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-lg shadow-red-200">
                                         <i className="fa-solid fa-circle"></i> AMBIL GAMBAR
                                     </button>
                                 )}
@@ -171,31 +193,32 @@
                                 <textarea 
                                     value={formData.tajuk} 
                                     onChange={(e) => setFormData({...formData, tajuk: e.target.value})}
-                                    rows="3" className="w-full p-3 bg-slate-50 border rounded-xl outline-none focus:border-red-500 font-bold" 
+                                    rows="3" className="w-full p-4 bg-slate-50 border rounded-xl outline-none focus:border-red-500 font-bold" 
+                                    placeholder="Nama rekod atau bahan..."
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Tahun</label>
-                                    <input type="text" value={formData.tahun} onChange={(e) => setFormData({...formData, tahun: e.target.value})} className="w-full p-3 bg-slate-50 border rounded-xl outline-none" placeholder="1994" />
+                                    <input type="text" value={formData.tahun} onChange={(e) => setFormData({...formData, tahun: e.target.value})} className="w-full p-4 bg-slate-50 border rounded-xl outline-none" placeholder="cth: 1994" />
                                 </div>
                                 <div>
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Bilangan</label>
-                                    <input type="number" value={formData.bil} onChange={(e) => setFormData({...formData, bil: e.target.value})} className="w-full p-3 bg-slate-50 border rounded-xl outline-none" />
+                                    <input type="number" value={formData.bil} onChange={(e) => setFormData({...formData, bil: e.target.value})} className="w-full p-4 bg-slate-50 border rounded-xl outline-none" />
                                 </div>
                             </div>
                             <div>
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Meter / Jumlah</label>
-                                <input type="text" value={formData.meter} onChange={(e) => setFormData({...formData, meter: e.target.value})} className="w-full p-3 bg-slate-50 border rounded-xl outline-none" />
+                                <input type="text" value={formData.meter} onChange={(e) => setFormData({...formData, meter: e.target.value})} className="w-full p-4 bg-slate-50 border rounded-xl outline-none" placeholder="cth: 0.05m" />
                             </div>
-                            <button onClick={handleSave} className="w-full bg-red-600 text-white font-black py-4 rounded-xl shadow-lg shadow-red-100 uppercase tracking-widest">
-                                <i className="fa-solid fa-save mr-2"></i> Simpan Rekod
+                            <button onClick={handleSave} disabled={loading} className={`w-full text-white font-black py-5 rounded-xl shadow-lg uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${loading ? 'bg-slate-400' : 'bg-red-600 shadow-red-100 hover:bg-red-700 active:scale-[0.98]'}`}>
+                                <i className="fa-solid fa-cloud-arrow-up"></i> SIMPAN REKOD
                             </button>
                         </div>
 
-                        <div className="text-center">
-                            <a href={DRIVE_FOLDER_URL} target="_blank" className="text-[10px] font-black text-slate-400 uppercase underline tracking-widest">
-                                Buka Folder Drive
+                        <div className="text-center pt-2">
+                            <a href={DRIVE_FOLDER_URL} target="_blank" className="text-[10px] font-black text-slate-400 uppercase underline tracking-widest hover:text-red-500 transition-colors">
+                                Buka Folder Gambar di Drive
                             </a>
                         </div>
                     </main>
