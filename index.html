@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Scan Buku Pelupusan PRO</title>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2/dist/tesseract.min.js"></script>
+  <style>
+    body { font-family: Arial; text-align: center; }
+    video, canvas, img { width: 90%; max-width: 400px; margin: 10px; }
+    input, textarea { width: 90%; padding: 8px; margin: 5px; }
+    button { padding: 10px; margin: 5px; font-size: 16px; }
+  </style>
+</head>
+
+<body>
+
+<h2>📸 Scan Buku Pelupusan (PRO)</h2>
+
+<video id="video" autoplay></video><br>
+
+<button onclick="capture()">📸 Ambil Gambar</button>
+
+<canvas id="canvas" style="display:none;"></canvas>
+
+<h3>🖼️ Preview Gambar</h3>
+<img id="preview"/>
+
+<h3>📖 Tajuk (Auto OCR)</h3>
+<textarea id="tajuk" rows="3"></textarea>
+
+<input id="tahun" placeholder="Tahun (contoh: 2020)">
+<input id="bil" placeholder="Bil (default 1)">
+<input id="jumlah" placeholder="Meter/Jumlah">
+
+<br>
+<button onclick="hantarData()">💾 Simpan ke Google Sheet</button>
+
+<script>
+const video = document.getElementById('video');
+let gambarBase64 = "";
+
+// buka kamera belakang
+navigator.mediaDevices.getUserMedia({
+  video: { facingMode: "environment" }
+})
+.then(stream => {
+  video.srcObject = stream;
+})
+.catch(err => {
+  alert("❌ Kamera tak boleh buka: " + err);
+});
+
+// 📸 ambil gambar + OCR
+function capture() {
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  ctx.drawImage(video, 0, 0);
+
+  gambarBase64 = canvas.toDataURL("image/jpeg");
+
+  // preview gambar
+  document.getElementById("preview").src = gambarBase64;
+
+  // OCR scan
+  Tesseract.recognize(canvas, 'eng', {
+    logger: m => console.log(m)
+  }).then(({ data: { text } }) => {
+
+    // 🔥 FILTER AUTO (ambil baris paling logik jadi tajuk)
+    let lines = text.split("\n").map(l => l.trim()).filter(l => l.length > 3);
+
+    // ambil baris paling panjang sebagai tajuk
+    let tajuk = lines.sort((a,b) => b.length - a.length)[0] || "";
+
+    document.getElementById("tajuk").value = tajuk;
+  });
+}
+
+// 💾 hantar ke Google Sheets
+function hantarData() {
+  const tajuk = document.getElementById("tajuk").value;
+  const tahun = document.getElementById("tahun").value;
+  const bil = document.getElementById("bil").value || 1;
+  const jumlah = document.getElementById("jumlah").value;
+
+  if (!tajuk) {
+    alert("❗ Tajuk kosong");
+    return;
+  }
+
+  fetch("https://script.google.com/macros/s/AKfycbxt2GGdTMy-BmXJXkapj5pJDciewqjsxuKtPNCEGPrlGR9NaNU4bK1T9gfsr81ZhjAY4Q/exec", {
+    method: "POST",
+    body: JSON.stringify({
+      tajuk: tajuk,
+      tahun: tahun,
+      bil: bil,
+      jumlah: jumlah,
+      gambar: gambarBase64
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    alert("✅ Data berjaya disimpan!");
+    resetForm();
+  })
+  .catch(err => {
+    alert("❌ Error: " + err);
+  });
+}
+
+// 🔁 reset form
+function resetForm() {
+  document.getElementById("tajuk").value = "";
+  document.getElementById("tahun").value = "";
+  document.getElementById("bil").value = "";
+  document.getElementById("jumlah").value = "";
+  document.getElementById("preview").src = "";
+}
+</script>
+
+</body>
+</html>
