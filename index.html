@@ -1,218 +1,190 @@
-import React, { useState, useRef } from 'react';
-import { Camera, Image as ImageIcon, Save, Type, Calendar, Hash, Activity, Loader2, ExternalLink } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pelupusan Smart AI</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .loader { border-top-color: #ef4444; animation: spinner 1s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
 
-const App = () => {
-  const [image, setImage] = useState(null);
-  const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    tajuk: '',
-    tahun: '',
-    bil: '1',
-    meter: ''
-  });
+    <script type="text/babel">
+        const { useState, useRef } = React;
 
-  // Pastikan URL ini bersih tanpa sebarang simbol tambahan
-  const SHEET_URL = "https://docs.google.com/spreadsheets/d/1_CX7JDm7xl-YGGpyZpZnPfYBKou_-TRjtDaFOg4fsl/edit";
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxCMoXBN84xUKUqlnBf_cU6DfwKMZYi-fW-7zPN41YqTca7v3kfbbsqgFx8J1WzQJ6Log/exec";
+        const App = () => {
+            const [image, setImage] = useState(null);
+            const [isCameraOpen, setIsCameraOpen] = useState(false);
+            const [loading, setLoading] = useState(false);
+            const [formData, setFormData] = useState({
+                tajuk: '', tahun: '', bil: '1', meter: ''
+            });
 
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
-  const apiKey = ""; // API Key automatik
+            // GANTIKAN URL INI DENGAN URL WEB APP ANDA YANG TERKINI
+            const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxCMoXBN84xUKUqlnBf_cU6DfwKMZYi-fW-7zPN41YqTca7v3kfbbsqgFx8J1WzQJ6Log/exec";
+            const SHEET_URL = "https://docs.google.com/spreadsheets/d/1_CX7JDm7xl-YGGpyZpZnPfYBKou_-TRjtDaFOg4fsl/edit";
 
-  const startCamera = async () => {
-    setIsCameraOpen(true);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } 
-      });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-    } catch (err) {
-      alert("Sila benarkan akses kamera dalam tetapan pelayar anda.");
-      setIsCameraOpen(false);
-    }
-  };
+            const videoRef = useRef(null);
+            const canvasRef = useRef(null);
 
-  const takePhoto = () => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    if (video && canvas) {
-      const maxWidth = 800;
-      const scale = maxWidth / video.videoWidth;
-      canvas.width = maxWidth;
-      canvas.height = video.videoHeight * scale;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-      setImage(dataUrl);
-      stopCamera();
-      processImageWithAI(dataUrl.split(',')[1]);
-    }
-  };
+            const startCamera = async () => {
+                setIsCameraOpen(true);
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: 'environment', width: { ideal: 1280 } } 
+                    });
+                    if (videoRef.current) videoRef.current.srcObject = stream;
+                } catch (err) {
+                    alert("Akses kamera ditolak.");
+                    setIsCameraOpen(false);
+                }
+            };
 
-  const stopCamera = () => {
-    const stream = videoRef.current?.srcObject;
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-    }
-    setIsCameraOpen(false);
-  };
+            const takePhoto = () => {
+                const video = videoRef.current;
+                const canvas = canvasRef.current;
+                // Kecilkan imej untuk kelajuan AI (Max 800px)
+                const scale = 800 / video.videoWidth;
+                canvas.width = 800;
+                canvas.height = video.videoHeight * scale;
+                
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                setImage(dataUrl);
+                
+                // Tutup kamera
+                const stream = video.srcObject;
+                if (stream) stream.getTracks().forEach(t => t.stop());
+                setIsCameraOpen(false);
 
-  const processImageWithAI = async (base64Data) => {
-    setLoading(true);
-    try {
-      const prompt = "Analisis imej fail pelupusan ini. Ekstrak: 1. Tajuk penuh (Jawi/BM). 2. Tahun. Respon dalam JSON: {\"tajuk\": \"...\", \"tahun\": \"...\"}";
-      
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }],
-          generationConfig: { responseMimeType: "application/json" }
-        })
-      });
+                // Jalankan AI Scan
+                processAI(dataUrl.split(',')[1]);
+            };
 
-      const result = await response.json();
-      const aiData = JSON.parse(result.candidates[0].content.parts[0].text);
-      
-      setFormData(prev => ({ 
-        ...prev, 
-        tajuk: aiData.tajuk || '',
-        tahun: aiData.tahun || ''
-      }));
-    } catch (error) {
-      alert("AI gagal memproses. Sila pastikan gambar jelas.");
-    } finally {
-      setLoading(false);
-    }
-  };
+            const processAI = async (base64) => {
+                setLoading(true);
+                try {
+                    const response = await fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: "scan_image", imageRaw: base64 })
+                    });
+                    const result = await response.json();
+                    setFormData(prev => ({
+                        ...prev,
+                        tajuk: result.tajuk || prev.tajuk,
+                        tahun: result.tahun || prev.tahun
+                    }));
+                } catch (err) {
+                    alert("Ralat AI: Pastikan Apps Script telah di-deploy dengan betul.");
+                } finally {
+                    setLoading(false);
+                }
+            };
 
-  const handleSave = async () => {
-    if (!formData.tajuk) return alert("Sila imbas tajuk dahulu.");
-    setLoading(true);
-    try {
-      const payload = {
-        ...formData,
-        id: "ID-" + Math.random().toString(36).substr(2, 6).toUpperCase(),
-        tarikh: new Date().toLocaleString('ms-MY'),
-        imageRaw: image?.split(',')[1]
-      };
-      await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-      alert("Data berjaya disimpan!");
-      setFormData({ tajuk: '', tahun: '', bil: '1', meter: '' });
-      setImage(null);
-    } catch (e) {
-      alert("Ralat simpan data.");
-    } finally {
-      setLoading(false);
-    }
-  };
+            const handleSave = async () => {
+                if (!formData.tajuk || !image) return alert("Sila ambil gambar dahulu.");
+                setLoading(true);
+                try {
+                    const payload = {
+                        ...formData,
+                        id: "ID-" + Math.random().toString(36).substr(2, 6).toUpperCase(),
+                        tarikh: new Date().toLocaleString('ms-MY'),
+                        imageRaw: image.split(',')[1]
+                    };
+                    await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+                    alert("Berjaya disimpan!");
+                    setFormData({ tajuk: '', tahun: '', bil: '1', meter: '' });
+                    setImage(null);
+                } catch (e) {
+                    alert("Ralat simpan.");
+                } finally {
+                    setLoading(false);
+                }
+            };
 
-  return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center p-4 font-sans">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
-        <div className="p-6 bg-red-600 text-white flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Camera size={24} />
-            <span className="font-black tracking-tighter text-xl uppercase">Pelupusan Smart</span>
-          </div>
-          <a href={SHEET_URL} target="_blank" rel="noreferrer" className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition-colors">
-            <ExternalLink size={18} />
-          </a>
-        </div>
+            return (
+                <div className="min-h-screen flex flex-col items-center p-4">
+                    <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-gray-100">
+                        {/* Header */}
+                        <div className="p-6 bg-slate-900 text-white flex justify-between items-center">
+                            <div className="flex items-center gap-2">
+                                <i className="fa-solid fa-microchip text-red-500"></i>
+                                <span className="font-black uppercase tracking-tighter text-lg">Pelupusan Smart</span>
+                            </div>
+                            <a href={SHEET_URL} target="_blank" className="opacity-50 hover:opacity-100"><i className="fa-solid fa-file-excel text-xl"></i></a>
+                        </div>
 
-        <div className="p-4 space-y-4">
-          <div className="aspect-[4/3] bg-gray-900 rounded-2xl overflow-hidden relative border-4 border-gray-50">
-            {isCameraOpen ? (
-              <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
-            ) : image ? (
-              <img src={image} className="w-full h-full object-cover" alt="Scan" />
-            ) : (
-              <div className="h-full flex flex-col items-center justify-center text-gray-500">
-                <ImageIcon size={40} className="mb-2 opacity-20" />
-                <p className="text-[10px] font-bold uppercase tracking-widest">Sedia untuk imbasan</p>
-              </div>
-            )}
-            {loading && (
-              <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white backdrop-blur-sm">
-                <Loader2 className="animate-spin mb-2" size={32} />
-                <p className="text-[10px] font-bold tracking-[0.3em]">MEMPROSES...</p>
-              </div>
-            )}
-          </div>
+                        {/* Viewfinder */}
+                        <div className="p-4 space-y-4">
+                            <div className="aspect-[4/3] bg-black rounded-3xl overflow-hidden relative border-4 border-gray-50">
+                                {isCameraOpen ? (
+                                    <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
+                                ) : image ? (
+                                    <img src={image} className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="h-full flex flex-col items-center justify-center text-gray-600">
+                                        <i className="fa-solid fa-camera text-4xl mb-2 opacity-20"></i>
+                                        <p className="text-[10px] font-bold uppercase tracking-widest">Sedia untuk imbasan</p>
+                                    </div>
+                                )}
+                                {loading && (
+                                    <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center text-white backdrop-blur-sm z-50">
+                                        <div className="loader ease-linear rounded-full border-4 border-t-4 border-gray-700 h-12 w-12 mb-4"></div>
+                                        <p className="text-[10px] font-black tracking-[0.3em] animate-pulse">PROSES AI...</p>
+                                    </div>
+                                )}
+                            </div>
 
-          <button 
-            onClick={isCameraOpen ? takePhoto : startCamera}
-            className={`w-full py-4 rounded-xl font-black text-sm tracking-widest transition-all active:scale-95 ${isCameraOpen ? 'bg-red-500 text-white animate-pulse' : 'bg-gray-900 text-white'}`}
-          >
-            {isCameraOpen ? 'AMBIL GAMBAR' : 'BUKA KAMERA'}
-          </button>
+                            <button onClick={isCameraOpen ? takePhoto : startCamera} className={`w-full py-5 rounded-2xl font-black tracking-widest transition-all active:scale-95 ${isCameraOpen ? 'bg-red-600 text-white' : 'bg-slate-900 text-white'}`}>
+                                {isCameraOpen ? 'AMBIL GAMBAR' : 'BUKA KAMERA'}
+                            </button>
 
-          <div className="space-y-4 pt-2">
-            <div className="space-y-1">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                <Type size={12} className="text-red-500" /> Tajuk Rekod
-              </label>
-              <textarea 
-                className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl text-sm font-bold focus:border-red-500 outline-none transition-colors"
-                value={formData.tajuk}
-                rows={3}
-                onChange={(e) => setFormData({...formData, tajuk: e.target.value})}
-              />
-            </div>
+                            {/* Form */}
+                            <div className="space-y-4 pt-2">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Tajuk Rekod (AI)</label>
+                                    <textarea className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold focus:border-red-500 outline-none" rows="3" value={formData.tajuk} onChange={e => setFormData({...formData, tajuk: e.target.value})} />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Tahun</label>
+                                        <input className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-center" value={formData.tahun} onChange={e => setFormData({...formData, tahun: e.target.value})} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Bilangan</label>
+                                        <input type="number" className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-center" value={formData.bil} onChange={e => setFormData({...formData, bil: e.target.value})} />
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase ml-1">Meter / Ketebalan</label>
+                                    <input className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold" placeholder="cth: 0.05m" value={formData.meter} onChange={e => setFormData({...formData, meter: e.target.value})} />
+                                </div>
+                                <button onClick={handleSave} disabled={loading || !image} className={`w-full py-5 rounded-2xl font-black tracking-widest shadow-lg transition-all ${loading || !image ? 'bg-gray-200 text-gray-400' : 'bg-green-600 text-white'}`}>
+                                    SIMPAN REKOD
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <canvas ref={canvasRef} className="hidden"></canvas>
+                    <p className="mt-8 text-[10px] font-bold text-gray-300 uppercase tracking-[0.5em]">Kamera Pelupusan Rekod AI</p>
+                </div>
+            );
+        };
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                  <Calendar size={12} className="text-red-500" /> Tahun
-                </label>
-                <input 
-                  className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl text-sm font-bold text-center"
-                  value={formData.tahun}
-                  onChange={(e) => setFormData({...formData, tahun: e.target.value})}
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                  <Hash size={12} className="text-red-500" /> Bilangan
-                </label>
-                <input 
-                  type="number"
-                  className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl text-sm font-bold text-center"
-                  value={formData.bil}
-                  onChange={(e) => setFormData({...formData, bil: e.target.value})}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                <Activity size={12} className="text-red-500" /> Meter / Ketebalan
-              </label>
-              <input 
-                className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl text-sm font-bold"
-                placeholder="cth: 0.05m"
-                value={formData.meter}
-                onChange={(e) => setFormData({...formData, meter: e.target.value})}
-              />
-            </div>
-
-            <button 
-              onClick={handleSave}
-              disabled={loading || !image}
-              className={`w-full py-4 rounded-xl font-black tracking-widest shadow-lg transition-all active:scale-95 ${loading || !image ? 'bg-gray-200 text-gray-400' : 'bg-green-600 text-white hover:bg-green-700'}`}
-            >
-              SIMPAN REKOD
-            </button>
-          </div>
-        </div>
-      </div>
-      <canvas ref={canvasRef} className="hidden" />
-      <p className="mt-6 text-[10px] font-bold text-gray-300 uppercase tracking-[0.4em]">Sistem Pelupusan Arkib</p>
-    </div>
-  );
-};
-
-export default App;
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
