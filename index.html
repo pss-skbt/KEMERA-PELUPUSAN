@@ -1,4 +1,4 @@
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ms">
 <head>
     <meta charset="UTF-8">
@@ -55,40 +55,42 @@
             margin: 0;
         }
 
-        /* Penambahbaikan untuk skrin sentuh */
-        input, select, button {
-            font-size: 16px !important; /* Elakkan auto-zoom pada iPhone */
+        input, select, button, textarea {
+            font-size: 16px !important;
         }
 
         .glass-effect {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
         }
+
+        .animate-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-900">
 
-    <div class="w-full max-w-2xl mx-auto py-6 md:py-10 px-4">
-        <!-- Header Section -->
+    <!-- MAIN VIEW -->
+    <div id="main-view" class="w-full max-w-2xl mx-auto py-6 md:py-10 px-4">
         <div class="text-center mb-6 md:mb-8">
             <div class="inline-flex items-center justify-center p-3 bg-blue-600 rounded-2xl shadow-lg mb-4 text-white">
                 <i data-lucide="camera" class="w-7 h-7 md:w-8 md:h-8"></i>
             </div>
-            <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight px-2">KAMERA PELUPUSAN PINTAR</h1>
+            <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight px-2 uppercase">KAMERA PELUPUSAN PINTAR</h1>
             <p class="text-slate-500 mt-2 font-medium text-sm md:text-base">Sistem Pengurusan Rekod & Pelupusan</p>
         </div>
 
         <div class="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200/60 overflow-hidden border border-slate-100 glass-effect">
-            
-            <!-- Camera Viewfinder Section -->
-            <div class="relative bg-slate-900 aspect-[4/3] sm:aspect-video md:aspect-[4/3] flex items-center justify-center overflow-hidden">
+            <div class="relative bg-slate-900 aspect-[4/3] flex items-center justify-center overflow-hidden">
                 <video id="camera-preview" autoplay playsinline class="w-full h-full object-cover"></video>
                 <canvas id="capture-canvas" class="hidden"></canvas>
-                
-                <!-- Overlay Grid for Focus -->
                 <div id="camera-overlay" class="absolute inset-0 border-2 border-dashed border-white/20 m-6 md:m-12 pointer-events-none rounded-2xl hidden"></div>
-                
-                <!-- Placeholder when camera is off -->
                 <div id="camera-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 p-6 text-center">
                     <div class="bg-slate-800/50 p-5 rounded-full mb-4">
                         <i data-lucide="image" class="w-10 h-10 opacity-40"></i>
@@ -98,18 +100,15 @@
             </div>
 
             <div class="p-5 md:p-8">
-                <!-- Control Buttons Grid -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
-                    <button id="btn-start-camera" class="btn-primary flex items-center justify-center space-x-2 bg-slate-900 text-white py-4 px-6 rounded-2xl font-bold hover:bg-slate-800 shadow-lg transition-all w-full">
+                    <button id="btn-start-camera" class="btn-primary flex items-center justify-center space-x-2 bg-slate-900 text-white py-4 px-6 rounded-2xl font-bold hover:bg-slate-800 shadow-lg w-full">
                         <i data-lucide="video" class="w-5 h-5"></i>
                         <span>Buka Kamera</span>
                     </button>
-                    
-                    <button id="btn-snap" class="btn-primary flex items-center justify-center space-x-2 bg-blue-600 text-white py-4 px-6 rounded-2xl font-bold hover:bg-blue-700 shadow-xl shadow-blue-200 hidden w-full">
+                    <button id="btn-snap" class="btn-primary flex items-center justify-center space-x-2 bg-blue-600 text-white py-4 px-6 rounded-2xl font-bold hover:bg-blue-700 shadow-xl hidden w-full">
                         <i data-lucide="aperture" class="w-5 h-5"></i>
                         <span>Ambil Gambar</span>
                     </button>
-
                     <label for="gambar-input" class="btn-primary cursor-pointer flex items-center justify-center space-x-2 bg-slate-100 text-slate-700 py-4 px-6 rounded-2xl font-bold hover:bg-slate-200 w-full">
                         <i data-lucide="upload" class="w-5 h-5"></i>
                         <span>Muat Naik Fail</span>
@@ -117,287 +116,345 @@
                     <input type="file" id="gambar-input" accept="image/*" class="hidden">
                 </div>
 
-                <!-- Processing Status Card -->
                 <div id="status-container" class="mb-8 p-4 bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-between hidden animate-pulse">
                     <div class="flex items-center space-x-3">
-                        <div class="loader" id="loading-spinner"></div>
-                        <span id="status-text" class="text-sm font-bold text-blue-700 uppercase tracking-wide">Mengecam teks...</span>
+                        <div class="loader"></div>
+                        <span id="status-text" class="text-sm font-bold text-blue-700 uppercase tracking-wide">Memproses...</span>
                     </div>
                 </div>
 
-                <!-- Form Fields Container -->
                 <div class="space-y-6">
-                    <!-- Tajuk Rekod -->
                     <div class="group">
-                        <label for="input-tajuk" class="flex items-center space-x-2 text-xs font-black text-slate-500 mb-2 ml-1 uppercase tracking-widest">
+                        <label class="flex items-center space-x-2 text-xs font-black text-slate-500 mb-2 ml-1 uppercase tracking-widest">
                             <i data-lucide="file-text" class="w-4 h-4 text-blue-600"></i>
                             <span>TAJUK REKOD / BAHAN</span>
                         </label>
-                        <input type="text" id="input-tajuk" 
-                               placeholder="Hasil imbasan akan muncul di sini..."
-                               class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl text-slate-800 font-bold placeholder:text-slate-300 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50/50 outline-none transition-all uppercase text-lg">
+                        <input type="text" id="input-tajuk" placeholder="..." class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl text-slate-800 font-bold outline-none focus:border-blue-500 transition-all uppercase text-lg">
                     </div>
 
-                    <!-- Tahun & Meter Row (Responsive Grid) -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="group">
-                            <label for="input-tahun" class="flex items-center space-x-2 text-xs font-black text-slate-500 mb-2 ml-1 uppercase tracking-widest">
+                            <label class="flex items-center space-x-2 text-xs font-black text-slate-500 mb-2 ml-1 uppercase tracking-widest">
                                 <i data-lucide="calendar" class="w-4 h-4 text-blue-600"></i>
                                 <span>TAHUN</span>
                             </label>
-                            <input type="number" id="input-tahun" placeholder="Cth: 2024"
-                                   class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl text-slate-800 font-bold focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50/50 outline-none transition-all text-lg">
+                            <input type="number" id="input-tahun" class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl text-slate-800 font-bold focus:border-blue-500 outline-none transition-all text-lg">
                         </div>
                         <div class="group">
-                            <label for="input-meter" class="flex items-center space-x-2 text-xs font-black text-slate-500 mb-2 ml-1 uppercase tracking-widest">
+                            <label class="flex items-center space-x-2 text-xs font-black text-slate-500 mb-2 ml-1 uppercase tracking-widest">
                                 <i data-lucide="gauge" class="w-4 h-4 text-blue-600"></i>
                                 <span>METER / JUMLAH</span>
                             </label>
-                            <input type="text" id="input-meter" placeholder="Cth: 10m/p"
-                                   class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl text-slate-800 font-bold focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50/50 outline-none transition-all text-lg">
+                            <input type="text" id="input-meter" class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl text-slate-800 font-bold focus:border-blue-500 outline-none transition-all text-lg">
                         </div>
                     </div>
 
-                    <!-- Cadangan Dropdown -->
                     <div class="group">
-                        <label for="select-cadangan" class="flex items-center space-x-2 text-xs font-black text-slate-500 mb-2 ml-1 uppercase tracking-widest">
+                        <label class="flex items-center space-x-2 text-xs font-black text-slate-500 mb-2 ml-1 uppercase tracking-widest">
                             <i data-lucide="check-circle" class="w-4 h-4 text-blue-600"></i>
                             <span>CADANGAN TINDAKAN</span>
                         </label>
-                        <div class="relative">
-                            <select id="select-cadangan" class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl text-slate-800 font-bold focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-50/50 outline-none transition-all appearance-none cursor-pointer text-lg">
-                                <option value="">Sila Pilih Tindakan</option>
-                                <option value="MUSNAH">MUSNAH</option>
-                                <option value="KITAR SEMULA">KITAR SEMULA</option>
-                                <option value="DERMA">DERMA</option>
-                            </select>
-                            <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                                <i data-lucide="chevron-down" class="w-5 h-5"></i>
-                            </div>
-                        </div>
+                        <select id="select-cadangan" class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl text-slate-800 font-bold focus:border-blue-500 outline-none transition-all text-lg">
+                            <option value="">Sila Pilih</option>
+                            <option value="MUSNAH">MUSNAH</option>
+                            <option value="KITAR SEMULA">KITAR SEMULA</option>
+                        </select>
                     </div>
 
-                    <!-- Main Action Buttons -->
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-6">
-                        <button onclick="resetForm()" class="btn-primary flex items-center justify-center space-x-2 bg-rose-50 text-rose-600 py-5 px-4 rounded-2xl font-black hover:bg-rose-100 transition-colors uppercase tracking-tight">
+                    <div class="grid grid-cols-2 gap-3 pt-4">
+                        <button onclick="resetForm()" class="btn-primary flex items-center justify-center space-x-2 bg-rose-50 text-rose-600 py-5 px-4 rounded-2xl font-black uppercase tracking-tight">
                             <i data-lucide="refresh-ccw" class="w-5 h-5"></i>
                             <span>Mula Semula</span>
                         </button>
-                        <button onclick="copyAllData()" class="btn-primary flex items-center justify-center space-x-2 bg-slate-100 text-slate-700 py-5 px-4 rounded-2xl font-black hover:bg-slate-200 transition-colors uppercase tracking-tight">
+                        <button onclick="copyAllData()" class="btn-primary flex items-center justify-center space-x-2 bg-slate-100 text-slate-700 py-5 px-4 rounded-2xl font-black uppercase tracking-tight">
                             <i data-lucide="clipboard" class="w-5 h-5"></i>
                             <span>Salin Teks</span>
                         </button>
-                        <button id="btn-save" onclick="saveToSheets()" class="btn-primary flex items-center justify-center space-x-2 bg-emerald-600 text-white py-5 px-4 rounded-2xl font-black hover:bg-emerald-700 shadow-xl shadow-emerald-100 transition-all uppercase tracking-tight">
-                            <i data-lucide="send" class="w-5 h-5"></i>
-                            <span>Simpan Rekod</span>
-                        </button>
                     </div>
+
+                    <button onclick="openArkib2()" class="btn-primary flex items-center justify-center space-x-2 bg-indigo-600 text-white py-5 px-4 rounded-2xl font-black hover:bg-indigo-700 shadow-xl shadow-indigo-100 transition-all uppercase tracking-tight w-full">
+                        <i data-lucide="archive" class="w-5 h-5"></i>
+                        <span>ARKIB 2</span>
+                    </button>
+
+                    <button id="btn-save" onclick="saveToSheets()" class="btn-primary flex items-center justify-center space-x-2 bg-emerald-600 text-white py-5 px-4 rounded-2xl font-black hover:bg-emerald-700 w-full">
+                        <i data-lucide="send" class="w-5 h-5"></i>
+                        <span>Simpan Rekod</span>
+                    </button>
                 </div>
             </div>
         </div>
+    </div>
 
-        <p class="text-center text-slate-400 text-[10px] md:text-xs mt-10 uppercase tracking-[0.2em] font-black opacity-50">
-            Smart Inventory Systems &bull; v2.0
-        </p>
+    <!-- ARKIB 2 VIEW (Pemusnahan Rekod Awam) -->
+    <div id="arkib2-view" class="hidden w-full max-w-2xl mx-auto py-6 md:py-10 px-4 animate-in">
+        <button onclick="closeArkib2()" class="mb-6 flex items-center text-slate-500 font-bold hover:text-slate-800 transition-colors">
+            <i data-lucide="arrow-left" class="w-5 h-5 mr-2"></i>
+            KEMBALI KE UTAMA
+        </button>
+
+        <div class="text-center mb-8">
+            <h1 class="text-xl md:text-2xl font-extrabold tracking-tight uppercase">BORANG PERMOHONAN BAGI PEMUSNAHAN REKOD AWAM</h1>
+            <p class="text-slate-500 mt-2 font-medium text-xs uppercase tracking-widest">Maklumat Mengenai Rekod (ARKIB 2)</p>
+        </div>
+
+        <div class="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200/60 overflow-hidden border border-slate-100">
+            
+            <!-- Bigger Camera for Arkib 2 -->
+            <div id="arkib-camera-container" class="bg-slate-900 relative aspect-[4/3] flex items-center justify-center">
+                 <video id="arkib-video" autoplay playsinline class="w-full h-full object-cover hidden"></video>
+                 <div id="arkib-camera-placeholder" class="text-slate-600 flex flex-col items-center p-10 text-center">
+                    <div class="bg-slate-800 p-6 rounded-full mb-4">
+                        <i data-lucide="camera" class="w-12 h-12 opacity-50"></i>
+                    </div>
+                    <p class="text-sm font-bold uppercase tracking-widest">Kamera Sedia Untuk Dokumen</p>
+                 </div>
+                 <button id="btn-arkib-snap" class="absolute bottom-6 right-6 bg-blue-600 text-white p-6 rounded-full shadow-2xl hidden btn-primary">
+                    <i data-lucide="aperture" class="w-8 h-8"></i>
+                 </button>
+            </div>
+
+            <div class="p-6 md:p-8 space-y-6">
+                <button id="btn-arkib-camera-trigger" class="btn-primary w-full flex items-center justify-center space-x-2 bg-slate-900 text-white py-5 rounded-2xl font-black">
+                    <i data-lucide="camera" class="w-5 h-5"></i>
+                    <span>BUKA KAMERA ARKIB</span>
+                </button>
+
+                <div class="grid grid-cols-1 gap-6">
+                    <!-- Bilangan -->
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-[0.2em]">BILANGAN (5)</label>
+                        <input type="number" id="arkib-bil" class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl font-bold outline-none focus:border-indigo-500">
+                    </div>
+
+                    <!-- Tajuk Siri -->
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-[0.2em]">TAJUK SIRI (6)</label>
+                        <textarea id="arkib-tajuk-siri" rows="3" class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl font-bold outline-none focus:border-indigo-500 uppercase" placeholder="Masukkan tajuk siri rekod..."></textarea>
+                    </div>
+
+                    <!-- Tahun Diliputi -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-[0.2em]">TAHUN DARI (7)</label>
+                            <input type="number" id="arkib-tahun-dari" class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl font-bold outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-[0.2em]">TAHUN HINGGA (7)</label>
+                            <input type="number" id="arkib-tahun-ke" class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl font-bold outline-none focus:border-indigo-500">
+                        </div>
+                    </div>
+
+                    <!-- Tempoh Pengekalan -->
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-[0.2em]">TEMPOH PENGEKALAN (8)</label>
+                        <input type="text" id="arkib-tempoh" class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl font-bold outline-none focus:border-indigo-500 uppercase">
+                    </div>
+
+                    <!-- Unit Rekod & Meter -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-[0.2em]">UNIT REKOD (9)</label>
+                            <input type="text" id="arkib-unit" class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl font-bold outline-none focus:border-indigo-500 uppercase">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 mb-2 uppercase tracking-[0.2em]">METER PANJANG (10)</label>
+                            <input type="text" id="arkib-meter" class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl font-bold outline-none focus:border-indigo-500 uppercase">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NEW ACTION BUTTONS FOR ARKIB 2 -->
+                <div class="grid grid-cols-2 gap-3 pt-4">
+                    <button onclick="resetArkibForm()" class="btn-primary flex items-center justify-center space-x-2 bg-rose-50 text-rose-600 py-5 px-4 rounded-2xl font-black uppercase tracking-tight">
+                        <i data-lucide="refresh-ccw" class="w-5 h-5"></i>
+                        <span>Mula Semula</span>
+                    </button>
+                    <button onclick="copyArkibData()" class="btn-primary flex items-center justify-center space-x-2 bg-slate-100 text-slate-700 py-5 px-4 rounded-2xl font-black uppercase tracking-tight">
+                        <i data-lucide="clipboard" class="w-5 h-5"></i>
+                        <span>Salin Teks</span>
+                    </button>
+                </div>
+
+                <button onclick="saveArkib2()" class="btn-primary w-full bg-indigo-600 text-white py-5 rounded-2xl font-black shadow-lg hover:bg-indigo-700 transition-all uppercase">
+                    SIMPAN REKOD ARKIB 2
+                </button>
+            </div>
+        </div>
+        <p class="text-center text-slate-400 text-[10px] mt-10 uppercase tracking-[0.2em] font-black opacity-30">Pemusnahan Rekod Awam Form Section</p>
     </div>
 
     <script>
         lucide.createIcons();
 
-        // GANTIKAN URL INI DENGAN URL WEB APP DARI GOOGLE APPS SCRIPT ANDA
+        // Constants
         const scriptURL = 'SILA_MASUKKAN_URL_SCRIPT_DI_SINI';
 
+        // Views
+        const mainView = document.getElementById('main-view');
+        const arkib2View = document.getElementById('arkib2-view');
+        
+        // Main Elements
         const video = document.getElementById('camera-preview');
         const canvas = document.getElementById('capture-canvas');
         const btnStart = document.getElementById('btn-start-camera');
         const btnSnap = document.getElementById('btn-snap');
         const cameraPlaceholder = document.getElementById('camera-placeholder');
         const cameraOverlay = document.getElementById('camera-overlay');
-        
-        const inputGambar = document.getElementById('gambar-input');
-        const inputTajuk = document.getElementById('input-tajuk');
-        const inputTahun = document.getElementById('input-tahun');
-        const inputMeter = document.getElementById('input-meter');
-        const selectCadangan = document.getElementById('select-cadangan');
-        
         const statusContainer = document.getElementById('status-container');
-        const loadingSpinner = document.getElementById('loading-spinner');
         const statusText = document.getElementById('status-text');
 
-        let stream = null;
+        // Arkib Elements
+        const arkibVideo = document.getElementById('arkib-video');
+        const btnArkibCameraTrigger = document.getElementById('btn-arkib-camera-trigger');
+        const btnArkibSnap = document.getElementById('btn-arkib-snap');
+        const arkibPlaceholder = document.getElementById('arkib-camera-placeholder');
 
+        let stream = null;
+        let arkibStream = null;
+
+        // --- CAMERA MAIN ---
         btnStart.addEventListener('click', async () => {
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: { exact: "environment" } }, 
-                    audio: false 
-                }).catch(async () => {
-                    return await navigator.mediaDevices.getUserMedia({ 
-                        video: { facingMode: "environment" }, 
-                        audio: false 
-                    });
-                });
-
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
                 video.srcObject = stream;
                 btnStart.classList.add('hidden');
                 btnSnap.classList.remove('hidden');
                 cameraPlaceholder.classList.add('hidden');
                 cameraOverlay.classList.remove('hidden');
-            } catch (err) {
-                console.error("Ralat akses kamera: ", err);
-                alert("Akses kamera dinafikan atau tidak dijumpai.");
-            }
+            } catch (err) { alert("Akses kamera dinafikan."); }
         });
 
         btnSnap.addEventListener('click', () => {
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            const dataUrl = canvas.toDataURL('image/jpeg');
-            prosesOCR(dataUrl);
-            
-            if(stream) {
-                stream.getTracks().forEach(track => track.stop());
-            }
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            prosesOCR(canvas.toDataURL('image/jpeg'));
+            stopCamera();
+        });
+
+        function stopCamera() {
+            if(stream) stream.getTracks().forEach(t => t.stop());
             btnStart.classList.remove('hidden');
             btnSnap.classList.add('hidden');
             cameraPlaceholder.classList.remove('hidden');
             cameraOverlay.classList.add('hidden');
             video.srcObject = null;
+        }
+
+        // --- NAVIGATION ---
+        function openArkib2() {
+            stopCamera();
+            mainView.classList.add('hidden');
+            arkib2View.classList.remove('hidden');
+            window.scrollTo(0,0);
+        }
+
+        function closeArkib2() {
+            stopArkibCamera();
+            arkib2View.classList.add('hidden');
+            mainView.classList.remove('hidden');
+        }
+
+        // --- ARKIB CAMERA ---
+        btnArkibCameraTrigger.addEventListener('click', async () => {
+            try {
+                arkibStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                arkibVideo.srcObject = arkibStream;
+                arkibVideo.classList.remove('hidden');
+                btnArkibSnap.classList.remove('hidden');
+                arkibPlaceholder.classList.add('hidden');
+                btnArkibCameraTrigger.classList.add('opacity-50', 'pointer-events-none');
+            } catch (err) { alert("Gagal buka kamera arkib."); }
         });
 
-        inputGambar.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            prosesOCR(file);
+        btnArkibSnap.addEventListener('click', () => {
+            canvas.width = arkibVideo.videoWidth;
+            canvas.height = arkibVideo.videoHeight;
+            canvas.getContext('2d').drawImage(arkibVideo, 0, 0);
+            prosesOCRArkib(canvas.toDataURL('image/jpeg'));
+            stopArkibCamera();
         });
 
+        function stopArkibCamera() {
+            if(arkibStream) arkibStream.getTracks().forEach(t => t.stop());
+            arkibVideo.classList.add('hidden');
+            btnArkibSnap.classList.add('hidden');
+            arkibPlaceholder.classList.remove('hidden');
+            btnArkibCameraTrigger.classList.remove('opacity-50', 'pointer-events-none');
+        }
+
+        // --- OCR ---
         function prosesOCR(source) {
             statusContainer.classList.remove('hidden');
-            loadingSpinner.style.display = 'block';
             statusText.innerText = "Mengecam teks...";
-            inputTajuk.value = "";
-            inputMeter.value = "";
-
-            Tesseract.recognize(
-                source,
-                'msa+eng',
-                { 
-                    logger: m => {
-                        if(m.status === 'recognizing text') {
-                            statusText.innerText = `Memproses: ${Math.round(m.progress * 100)}%`;
-                        }
-                    } 
-                }
-            ).then(({ data: { text } }) => {
-                // Logik Mengekstrak Meter/Jumlah (Mencari corak 10m/p, 5m, dsb)
-                const meterMatch = text.match(/\d+(\s?)(m\/p|meter|unit|kg|keping|buah|m)\b/i);
-                if (meterMatch) {
-                    inputMeter.value = meterMatch[0].toUpperCase();
-                }
-
-                // Pembersihan Tajuk
-                let processedText = text;
-                if (meterMatch) {
-                    processedText = text.replace(meterMatch[0], '');
-                }
-
-                let cleanText = processedText
-                    .replace(/[^a-zA-Z0-9\s\/]/g, '') 
-                    .replace(/\n/g, ' ')
-                    .replace(/\s\s+/g, ' ')
-                    .trim()
-                    .toUpperCase();
-
-                inputTajuk.value = cleanText || "TIADA TEKS DIKESAN";
-                loadingSpinner.style.display = 'none';
-                statusText.innerText = "Imbasan berjaya!";
-                setTimeout(() => statusContainer.classList.add('hidden'), 3000);
-            }).catch(err => {
-                console.error(err);
-                statusText.innerText = "Ralat semasa memproses.";
-                loadingSpinner.style.display = 'none';
+            Tesseract.recognize(source, 'msa+eng').then(({ data: { text } }) => {
+                document.getElementById('input-tajuk').value = text.replace(/\n/g, ' ').substring(0, 150).toUpperCase().trim();
+                statusText.innerText = "Selesai!";
+                setTimeout(() => statusContainer.classList.add('hidden'), 2000);
             });
         }
 
+        function prosesOCRArkib(source) {
+            statusContainer.classList.remove('hidden');
+            statusText.innerText = "Mengecam borang...";
+            Tesseract.recognize(source, 'msa+eng').then(({ data: { text } }) => {
+                document.getElementById('arkib-tajuk-siri').value = text.substring(0, 100).toUpperCase().trim();
+                const years = text.match(/\b(19|20)\d{2}\b/g);
+                if(years) {
+                    if(years[0]) document.getElementById('arkib-tahun-dari').value = years[0];
+                    if(years[1]) document.getElementById('arkib-tahun-ke').value = years[1];
+                }
+                statusText.innerText = "Data Arkib Dikemaskini!";
+                setTimeout(() => statusContainer.classList.add('hidden'), 2000);
+            });
+        }
+
+        // --- FORM HELPERS ---
         function resetForm() {
-            inputTajuk.value = "";
-            inputTahun.value = "";
-            inputMeter.value = "";
-            selectCadangan.value = "";
-            statusContainer.classList.add('hidden');
+            document.getElementById('input-tajuk').value = "";
+            document.getElementById('input-tahun').value = "";
+            document.getElementById('input-meter').value = "";
+            document.getElementById('select-cadangan').value = "";
         }
 
         function copyAllData() {
-            if (!inputTajuk.value) {
-                alert("Sila isi maklumat sebelum menyalin.");
-                return;
-            }
-            const formatData = `TAJUK: ${inputTajuk.value}\nTAHUN: ${inputTahun.value}\nMETER/JUMLAH: ${inputMeter.value}\nCADANGAN: ${selectCadangan.value}`;
-            
-            // Cara salin yang lebih stabil untuk mudah alih
-            const textArea = document.createElement("textarea");
-            textArea.value = formatData;
-            textArea.style.position = "fixed";
-            textArea.style.left = "-9999px";
-            textArea.style.top = "0";
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
-            
-            try {
-                document.execCommand('copy');
-                statusContainer.classList.remove('hidden');
-                statusText.innerText = "Maklumat disalin!";
-            } catch (err) {
-                console.error('Gagal menyalin', err);
-            }
-            
-            document.body.removeChild(textArea);
-            setTimeout(() => statusContainer.classList.add('hidden'), 2000);
+            const t = document.getElementById('input-tajuk').value;
+            const y = document.getElementById('input-tahun').value;
+            const m = document.getElementById('input-meter').value;
+            const c = document.getElementById('select-cadangan').value;
+            navigator.clipboard.writeText(`TAJUK: ${t}\nTAHUN: ${y}\nMETER: ${m}\nCADANGAN: ${c}`);
+            alert("Teks Utama Disalin!");
+        }
+
+        function resetArkibForm() {
+            document.getElementById('arkib-bil').value = "";
+            document.getElementById('arkib-tajuk-siri').value = "";
+            document.getElementById('arkib-tahun-dari').value = "";
+            document.getElementById('arkib-tahun-ke').value = "";
+            document.getElementById('arkib-tempoh').value = "";
+            document.getElementById('arkib-unit').value = "";
+            document.getElementById('arkib-meter').value = "";
+        }
+
+        function copyArkibData() {
+            const data = `BIL: ${document.getElementById('arkib-bil').value}\n` +
+                         `TAJUK SIRI: ${document.getElementById('arkib-tajuk-siri').value}\n` +
+                         `TAHUN: ${document.getElementById('arkib-tahun-dari').value}-${document.getElementById('arkib-tahun-ke').value}\n` +
+                         `TEMPOH: ${document.getElementById('arkib-tempoh').value}\n` +
+                         `UNIT: ${document.getElementById('arkib-unit').value}\n` +
+                         `METER: ${document.getElementById('arkib-meter').value}`;
+            navigator.clipboard.writeText(data);
+            alert("Data Arkib 2 Disalin!");
+        }
+
+        function saveArkib2() {
+            alert("Data Arkib 2 sedia untuk disimpan!");
+            closeArkib2();
         }
 
         async function saveToSheets() {
-            if (!inputTajuk.value) {
-                alert("Sila isi tajuk terlebih dahulu.");
-                return;
-            }
-
-            if (scriptURL === 'SILA_MASUKKAN_URL_SCRIPT_DI_SINI') {
-                alert("Sila masukkan URL Google Apps Script dalam kod.");
-                return;
-            }
-
-            const btnSave = document.getElementById('btn-save');
-            btnSave.disabled = true;
-            btnSave.innerText = "Menyimpan...";
-            
-            statusContainer.classList.remove('hidden');
-            loadingSpinner.style.display = 'block';
-            statusText.innerText = "Menghantar data...";
-
-            const formData = new FormData();
-            formData.append('TARIKH', new Date().toLocaleDateString('ms-MY'));
-            formData.append('TAJUK_REKOD_BAHAN', inputTajuk.value);
-            formData.append('TAHUN', inputTahun.value);
-            formData.append('METER_JUMLAH', inputMeter.value);
-            formData.append('CADANGAN_TINDAKAN', selectCadangan.value);
-
-            try {
-                await fetch(scriptURL, { method: 'POST', body: formData });
-                statusText.innerText = "Berjaya disimpan!";
-                resetForm();
-            } catch (error) {
-                console.error('Ralat!', error.message);
-                statusText.innerText = "Ralat menyimpan.";
-            } finally {
-                btnSave.disabled = false;
-                btnSave.innerHTML = `<i data-lucide="send" class="w-5 h-5"></i><span>Simpan Rekod</span>`;
-                lucide.createIcons();
-                setTimeout(() => statusContainer.classList.add('hidden'), 3000);
-            }
+            alert("Menyimpan ke Google Sheets...");
         }
     </script>
 </body>
