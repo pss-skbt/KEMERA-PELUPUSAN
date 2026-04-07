@@ -468,9 +468,22 @@
 
         // --- OCR HELPERS ---
         function extractMeterValue(text) {
+            // Cari corak angka diikuti CM (contoh: 50CM, 50 CM)
+            const cmPattern = /(\d+(\.\d+)?)\s*CM\b/i;
+            const cmMatch = text.match(cmPattern);
+            if (cmMatch) {
+                const cmVal = parseFloat(cmMatch[1]);
+                const mVal = cmVal / 100;
+                return mVal.toFixed(2) + " M.P";
+            }
+
+            // Fallback cari corak angka diikuti M atau METER
             const meterPattern = /(\d+(\.\d+)?)\s*(M|METER|METRE)?\b/i;
             const match = text.match(meterPattern);
-            return match ? match[1] : null;
+            if (match) {
+                 return parseFloat(match[1]).toFixed(2) + " M.P";
+            }
+            return null;
         }
 
         // --- OCR MAIN ---
@@ -480,10 +493,12 @@
             Tesseract.recognize(source, 'msa+eng').then(({ data: { text } }) => {
                 const cleanedText = text.replace(/\n/g, ' ').toUpperCase().trim();
                 document.getElementById('input-tajuk').value = cleanedText.substring(0, 150);
+                
                 const meterVal = extractMeterValue(cleanedText);
                 if(meterVal) {
                     document.getElementById('input-meter').value = meterVal;
                 }
+                
                 const years = cleanedText.match(/\b(19|20)\d{2}\b/g);
                 if(years && years[0]) {
                     document.getElementById('input-tahun').value = years[0];
@@ -503,11 +518,13 @@
                 if (cleanedText.length > 0) {
                     tajukInput.value = cleanedText.substring(0, 200);
                 }
+                
                 const meterInput = document.getElementById('arkib-meter');
                 const meterVal = extractMeterValue(cleanedText);
                 if(meterVal) {
                     meterInput.value = meterVal;
                 }
+                
                 const years = cleanedText.match(/\b(19|20)\d{2}\b/g);
                 if(years) {
                     if(years[0]) document.getElementById('arkib-tahun-dari').value = years[0];
