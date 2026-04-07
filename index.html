@@ -72,6 +72,27 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        /* Kotak Fokus Kamera */
+        .camera-frame {
+            position: absolute;
+            top: 10%;
+            left: 10%;
+            right: 10%;
+            bottom: 10%;
+            pointer-events: none;
+        }
+        .frame-corner {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-color: rgba(255, 255, 255, 0.8);
+            border-width: 4px;
+        }
+        .corner-tl { top: 0; left: 0; border-right: 0; border-bottom: 0; border-top-left-radius: 12px; }
+        .corner-tr { top: 0; right: 0; border-left: 0; border-bottom: 0; border-top-right-radius: 12px; }
+        .corner-bl { bottom: 0; left: 0; border-right: 0; border-top: 0; border-bottom-left-radius: 12px; }
+        .corner-br { bottom: 0; right: 0; border-left: 0; border-top: 0; border-bottom-right-radius: 12px; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-900">
@@ -209,23 +230,26 @@
             <!-- Camera for Arkib 2 -->
             <div id="arkib-camera-container" class="bg-slate-900 relative aspect-[4/3] flex items-center justify-center">
                  <video id="arkib-video" autoplay playsinline class="w-full h-full object-cover hidden"></video>
-                 <div id="arkib-camera-placeholder" class="text-slate-600 flex flex-col items-center p-10 text-center">
-                    <div class="bg-slate-800 p-6 rounded-full mb-4">
-                        <i data-lucide="camera" class="w-12 h-12 opacity-50"></i>
-                    </div>
-                    <p class="text-sm font-bold uppercase tracking-widest">Kamera Sedia Untuk Dokumen</p>
+                 
+                 <!-- Kotak Fokus Garis (Frame Overlay) -->
+                 <div id="arkib-camera-frame" class="camera-frame hidden">
+                    <div class="frame-corner corner-tl"></div>
+                    <div class="frame-corner corner-tr"></div>
+                    <div class="frame-corner corner-bl"></div>
+                    <div class="frame-corner corner-br"></div>
                  </div>
-                 <button id="btn-arkib-snap" class="absolute bottom-6 right-6 bg-blue-600 text-white p-6 rounded-full shadow-2xl hidden btn-primary">
-                    <i data-lucide="aperture" class="w-8 h-8"></i>
-                 </button>
+
+                 <div id="arkib-camera-placeholder" class="text-slate-600 flex flex-col items-center p-10 text-center">
+                    <p class="text-sm font-bold uppercase tracking-widest opacity-40">Kamera Arkib Belum Diaktifkan</p>
+                 </div>
             </div>
 
             <div class="p-6 md:p-8 space-y-6">
-                <!-- Butang Kamera & Muat Naik untuk Arkib 2 -->
+                <!-- Butang Kamera Dinamik Arkib 2 -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-                    <button id="btn-arkib-camera-trigger" class="btn-primary w-full flex items-center justify-center space-x-2 bg-slate-900 text-white py-5 rounded-2xl font-black">
+                    <button id="btn-arkib-camera-action" class="btn-primary w-full flex items-center justify-center space-x-2 bg-slate-900 text-white py-5 rounded-2xl font-black">
                         <i data-lucide="camera" class="w-5 h-5"></i>
-                        <span>BUKA KAMERA ARKIB</span>
+                        <span id="arkib-btn-text">BUKA KAMERA ARKIB</span>
                     </button>
                     <label for="arkib-gambar-input" class="btn-primary cursor-pointer flex items-center justify-center space-x-2 bg-slate-100 text-slate-700 py-5 px-6 rounded-2xl font-black hover:bg-slate-200 w-full uppercase">
                         <i data-lucide="upload" class="w-5 h-5"></i>
@@ -321,13 +345,15 @@
 
         // Arkib Elements
         const arkibVideo = document.getElementById('arkib-video');
-        const btnArkibCameraTrigger = document.getElementById('btn-arkib-camera-trigger');
-        const btnArkibSnap = document.getElementById('btn-arkib-snap');
+        const btnArkibCameraAction = document.getElementById('btn-arkib-camera-action');
+        const arkibBtnText = document.getElementById('arkib-btn-text');
         const arkibPlaceholder = document.getElementById('arkib-camera-placeholder');
+        const arkibFrame = document.getElementById('arkib-camera-frame');
         const fileInputArkib = document.getElementById('arkib-gambar-input');
 
         let stream = null;
         let arkibStream = null;
+        let isArkibCameraOpen = false;
 
         // --- FUNGSI PREVIEW BERBEZA ---
         function previewDataRekod() {
@@ -400,32 +426,44 @@
             mainView.classList.remove('hidden');
         }
 
-        // --- ARKIB CAMERA ---
-        btnArkibCameraTrigger.addEventListener('click', async () => {
-            try {
-                arkibStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                arkibVideo.srcObject = arkibStream;
-                arkibVideo.classList.remove('hidden');
-                btnArkibSnap.classList.remove('hidden');
-                arkibPlaceholder.classList.add('hidden');
-                btnArkibCameraTrigger.classList.add('opacity-50', 'pointer-events-none');
-            } catch (err) { alert("Gagal buka kamera arkib."); }
-        });
-
-        btnArkibSnap.addEventListener('click', () => {
-            canvas.width = arkibVideo.videoWidth;
-            canvas.height = arkibVideo.videoHeight;
-            canvas.getContext('2d').drawImage(arkibVideo, 0, 0);
-            prosesOCRArkib(canvas.toDataURL('image/jpeg'));
-            stopArkibCamera();
+        // --- ARKIB CAMERA (DYNAMC BUTTON) ---
+        btnArkibCameraAction.addEventListener('click', async () => {
+            if (!isArkibCameraOpen) {
+                // FUNGSI: BUKA KAMERA
+                try {
+                    arkibStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                    arkibVideo.srcObject = arkibStream;
+                    arkibVideo.classList.remove('hidden');
+                    arkibFrame.classList.remove('hidden');
+                    arkibPlaceholder.classList.add('hidden');
+                    
+                    // Tukar UI Butang
+                    arkibBtnText.innerText = "AMBIL GAMBAR ARKIB";
+                    btnArkibCameraAction.classList.remove('bg-slate-900');
+                    btnArkibCameraAction.classList.add('bg-blue-600');
+                    isArkibCameraOpen = true;
+                } catch (err) { alert("Gagal buka kamera arkib."); }
+            } else {
+                // FUNGSI: SNAP
+                canvas.width = arkibVideo.videoWidth;
+                canvas.height = arkibVideo.videoHeight;
+                canvas.getContext('2d').drawImage(arkibVideo, 0, 0);
+                prosesOCRArkib(canvas.toDataURL('image/jpeg'));
+                stopArkibCamera();
+            }
         });
 
         function stopArkibCamera() {
             if(arkibStream) arkibStream.getTracks().forEach(t => t.stop());
             arkibVideo.classList.add('hidden');
-            btnArkibSnap.classList.add('hidden');
+            arkibFrame.classList.add('hidden');
             arkibPlaceholder.classList.remove('hidden');
-            btnArkibCameraTrigger.classList.remove('opacity-50', 'pointer-events-none');
+            
+            // Reset UI Butang
+            arkibBtnText.innerText = "BUKA KAMERA ARKIB";
+            btnArkibCameraAction.classList.remove('bg-blue-600');
+            btnArkibCameraAction.classList.add('bg-slate-900');
+            isArkibCameraOpen = false;
         }
 
         // --- OCR HELPERS ---
