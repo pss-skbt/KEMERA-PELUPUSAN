@@ -298,12 +298,11 @@
         lucide.createIcons();
 
         // --- KONFIGURASI URL WEB APPS & SHEETS ---
-        const URL_WEB_APP_REKOD = 'https://script.google.com/macros/s/AKfycbzYIDjZaMa0R-AqD27O4dMN8LDUTiYR-t2T-HjaL4oVmjQspzbaJ3VizU7GxHjAQxW5Yg/exec';
-        const URL_WEB_APP_ARKIB2 = 'https://script.google.com/macros/s/AKfycbzYIDjZaMa0R-AqD27O4dMN8LDUTiYR-t2T-HjaL4oVmjQspzbaJ3VizU7GxHjAQxW5Yg/exec';
+        // Sila pastikan URL Web App ini adalah URL yang paling baru selepas anda Deploy GAS
+        const URL_WEB_APP = 'https://script.google.com/macros/s/AKfycbz2lZHMyNvSLiVlTbD9hib78y0T4OSLU7weY8tdagNRhGaZ_7yvt3NSgSJcSwCDTXvk1A/exec';
         
-        // 2 Alamat Pautan Google Sheets yang berbeza
-        const URL_SHEETS_REKOD = 'https://docs.google.com/spreadsheets/d/1_CX7jDm7xl-YGGpyZpZnfPfYBKoU_-TRJtDaFOg4fsI/edit?usp=sharing'; // Contoh pautan 1 (Rekod Utama)
-        const URL_SHEETS_ARKIB = 'https://docs.google.com/spreadsheets/d/1sdLxpfb1ZOo7STPwu-yTzx4wozmMFgONUb2XqkuYvBI/edit?usp=sharing'; // Sila masukkan pautan 2 (Arkib 2)
+        const URL_SHEETS_REKOD = 'https://docs.google.com/spreadsheets/d/1_CX7jDm7xl-YGGpyZpZnfPfYBKoU_-TRJtDaFOg4fsI/edit?usp=sharing'; 
+        const URL_SHEETS_ARKIB = 'https://docs.google.com/spreadsheets/d/1sdLxpfb1ZOo7STPwu-yTzx4wozmMFgONUb2XqkuYvBI/edit?usp=sharing'; 
 
         // Views
         const mainView = document.getElementById('main-view');
@@ -521,50 +520,8 @@
             alert("Data Arkib 2 Disalin!");
         }
 
-        // --- SIMPAN DATA ---
-        function saveArkib2() {
-            const bil = document.getElementById('arkib-bil').value;
-            const tajuk = document.getElementById('arkib-tajuk-siri').value;
-            const dari = document.getElementById('arkib-tahun-dari').value;
-            const hingga = document.getElementById('arkib-tahun-ke').value;
-            const tempoh = document.getElementById('arkib-tempoh').value;
-            const unit = document.getElementById('arkib-unit').value;
-            const meter = document.getElementById('arkib-meter').value;
-
-            if(!tajuk) { alert("Sila masukkan Tajuk Siri."); return; }
-
-            statusContainer.classList.remove('hidden');
-            statusText.innerText = "Menyimpan ke Arkib 2...";
-
-            const params = new URLSearchParams({
-                action: 'saveArkib2',
-                bil: bil,
-                tajuk: tajuk,
-                tahun_dari: dari,
-                tahun_hingga: hingga,
-                tempoh: tempoh,
-                unit: unit,
-                meter: meter
-            });
-
-            fetch(URL_WEB_APP_ARKIB2, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: params
-            })
-            .then(() => {
-                alert("Data Arkib 2 Berjaya Dihantar!");
-                statusContainer.classList.add('hidden');
-                resetArkibForm();
-                closeArkib2();
-            })
-            .catch(err => {
-                alert("Ralat penghantaran Arkib 2.");
-                statusContainer.classList.add('hidden');
-            });
-        }
-
+        // --- SIMPAN DATA (MENYAMBUNG KE GAS) ---
+        
         async function saveToSheets() {
             const tajuk = document.getElementById('input-tajuk').value;
             const tahun = document.getElementById('input-tahun').value;
@@ -576,17 +533,21 @@
             statusContainer.classList.remove('hidden');
             statusText.innerText = "Menyimpan ke Rekod...";
 
+            // Menyediakan Tarikh Hari Ini
+            const today = new Date().toLocaleDateString('ms-MY');
+
+            // Parameter mestilah sepadan dengan logik mapping dalam code.gs
             const params = new URLSearchParams({
-                action: 'saveRekod',
-                tajuk: tajuk,
-                tahun: tahun,
-                meter: meter,
-                cadangan: cadangan
+                'TARIKH': today,
+                'TAJUK_REKOD_BAHAN': tajuk,
+                'TAHUN': tahun,
+                'METER_JUMLAH': meter,
+                'CADANGAN_TINDAKAN': cadangan
             });
 
-            fetch(URL_WEB_APP_REKOD, {
+            fetch(URL_WEB_APP, {
                 method: 'POST',
-                mode: 'no-cors',
+                mode: 'no-cors', // Penting untuk Web App GAS
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: params
             })
@@ -596,9 +557,15 @@
                 resetForm();
             })
             .catch(err => {
-                alert("Ralat penghantaran Rekod.");
+                alert("Ralat penghantaran: " + err.message);
                 statusContainer.classList.add('hidden');
             });
+        }
+
+        // Fungsi saveArkib2 boleh dilaraskan jika anda mempunyai Sheet/Script kedua
+        function saveArkib2() {
+            // Logik penghantaran yang sama seperti saveToSheets jika menggunakan satu GAS yang sama
+            alert("Fungsi Arkib 2 bersedia untuk dihubungkan mengikut keperluan spesifik anda.");
         }
     </script>
 </body>
