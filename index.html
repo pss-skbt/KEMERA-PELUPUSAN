@@ -5,14 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Kamera Pelupusan Pintar</title>
     
+    <!-- Icon untuk Add to Home Screen -->
     <link rel="apple-touch-icon" sizes="120x120" href="icon120.png">
     <link rel="apple-touch-icon" sizes="152x152" href="icon152.png">
     <link rel="apple-touch-icon" sizes="167x167" href="icon167.png">
     <link rel="apple-touch-icon" sizes="180x180" href="icon180.png">
     <link rel="icon" type="image/png" sizes="180x180" href="icon180.png">
 
+    <!-- Memuatkan Tesseract.js daripada CDN -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons untuk estetika UI -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -73,6 +76,7 @@
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-900">
 
+    <!-- MAIN VIEW -->
     <div id="main-view" class="w-full max-w-2xl mx-auto py-6 md:py-10 px-4">
         <div class="text-center mb-6 md:mb-8">
             <div class="inline-flex items-center justify-center p-3 bg-blue-600 rounded-2xl shadow-lg mb-4 text-white">
@@ -173,6 +177,7 @@
                         <span>Simpan Rekod</span>
                     </button>
 
+                    <!-- Butang Preview Data Utama -->
                     <button onclick="previewDataRekod()" class="btn-primary flex items-center justify-center space-x-2 bg-amber-500 text-white py-5 px-4 rounded-2xl font-black hover:bg-amber-600 w-full shadow-lg shadow-amber-100 uppercase tracking-tight">
                         <i data-lucide="eye" class="w-5 h-5"></i>
                         <span>PREVIEW DATA</span>
@@ -187,6 +192,7 @@
         </div>
     </div>
 
+    <!-- ARKIB 2 VIEW (Pemusnahan Rekod Awam) -->
     <div id="arkib2-view" class="hidden w-full max-w-2xl mx-auto py-6 md:py-10 px-4 animate-in">
         <button onclick="closeArkib2()" class="mb-6 flex items-center text-slate-500 font-bold hover:text-slate-800 transition-colors">
             <i data-lucide="arrow-left" class="w-5 h-5 mr-2"></i>
@@ -199,6 +205,8 @@
         </div>
 
         <div class="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200/60 overflow-hidden border border-slate-100">
+            
+            <!-- Camera for Arkib 2 -->
             <div id="arkib-camera-container" class="bg-slate-900 relative aspect-[4/3] flex items-center justify-center">
                  <video id="arkib-video" autoplay playsinline class="w-full h-full object-cover hidden"></video>
                  <div id="arkib-camera-placeholder" class="text-slate-600 flex flex-col items-center p-10 text-center">
@@ -213,6 +221,7 @@
             </div>
 
             <div class="p-6 md:p-8 space-y-6">
+                <!-- Butang Kamera & Muat Naik untuk Arkib 2 -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                     <button id="btn-arkib-camera-trigger" class="btn-primary w-full flex items-center justify-center space-x-2 bg-slate-900 text-white py-5 rounded-2xl font-black">
                         <i data-lucide="camera" class="w-5 h-5"></i>
@@ -275,27 +284,32 @@
                     SIMPAN REKOD ARKIB 2
                 </button>
 
+                <!-- Butang Preview Data Khusus Arkib 2 -->
                 <button onclick="previewDataArkib()" class="btn-primary flex items-center justify-center space-x-2 bg-amber-500 text-white py-5 px-4 rounded-2xl font-black hover:bg-amber-600 w-full shadow-lg shadow-amber-100 uppercase tracking-tight">
                     <i data-lucide="eye" class="w-5 h-5"></i>
                     <span>Preview Data DI ARKIB 2</span>
                 </button>
             </div>
         </div>
+        <p class="text-center text-slate-400 text-[10px] mt-10 uppercase tracking-[0.2em] font-black opacity-30">Pemusnahan Rekod Awam Form Section</p>
     </div>
 
     <script>
         lucide.createIcons();
 
         // --- KONFIGURASI URL WEB APPS & SHEETS ---
-        // Satu URL Web App sahaja (kerana doPost menguruskan kedua-dua action)
-        const URL_WEB_APP = 'https://script.google.com/macros/s/AKfycbxyMBLbI915YnK6_Q3sU5zzCTbgdaMx8sDYzhTnEP5a0wDlLOcdL24EYBK1967A1Yxrvw/exec';
+        const URL_WEB_APP_REKOD = 'https://script.google.com/macros/s/AKfycbzYIDjZaMa0R-AqD27O4dMN8LDUTiYR-t2T-HjaL4oVmjQspzbaJ3VizU7GxHjAQxW5Yg/exec';
+        const URL_WEB_APP_ARKIB2 = 'https://script.google.com/macros/s/AKfycbzYIDjZaMa0R-AqD27O4dMN8LDUTiYR-t2T-HjaL4oVmjQspzbaJ3VizU7GxHjAQxW5Yg/exec';
         
-        const URL_SHEETS_REKOD = 'https://docs.google.com/spreadsheets/d/1_CX7jDm7xl-YGGpyZpZnfPfYBKoU_-TRJtDaFOg4fsI/edit?usp=sharing';
-        const URL_SHEETS_ARKIB = 'https://docs.google.com/spreadsheets/d/1sdLxpfb1ZOo7STPwu-yTzx4wozmMFgONUb2XqkuYvBI/edit?usp=sharing';
+        // 2 Alamat Pautan Google Sheets yang berbeza
+        const URL_SHEETS_REKOD = 'https://docs.google.com/spreadsheets/d/1_CX7jDm7xl-YGGpyZpZnfPfYBKoU_-TRJtDaFOg4fsI/edit?usp=sharing'; // Contoh pautan 1 (Rekod Utama)
+        const URL_SHEETS_ARKIB = 'https://docs.google.com/spreadsheets/d/1sdLxpfb1ZOo7STPwu-yTzx4wozmMFgONUb2XqkuYvBI/edit?usp=sharing'; // Sila masukkan pautan 2 (Arkib 2)
 
-        // Elements
+        // Views
         const mainView = document.getElementById('main-view');
         const arkib2View = document.getElementById('arkib2-view');
+        
+        // Main Elements
         const video = document.getElementById('camera-preview');
         const canvas = document.getElementById('capture-canvas');
         const btnStart = document.getElementById('btn-start-camera');
@@ -305,6 +319,8 @@
         const statusContainer = document.getElementById('status-container');
         const statusText = document.getElementById('status-text');
         const fileInputMain = document.getElementById('gambar-input');
+
+        // Arkib Elements
         const arkibVideo = document.getElementById('arkib-video');
         const btnArkibCameraTrigger = document.getElementById('btn-arkib-camera-trigger');
         const btnArkibSnap = document.getElementById('btn-arkib-snap');
@@ -314,49 +330,198 @@
         let stream = null;
         let arkibStream = null;
 
-        // Functions Preview
-        function previewDataRekod() { window.open(URL_SHEETS_REKOD, '_blank'); }
-        function previewDataArkib() { window.open(URL_SHEETS_ARKIB, '_blank'); }
+        // --- FUNGSI PREVIEW BERBEZA ---
+        function previewDataRekod() {
+            window.open(URL_SHEETS_REKOD, '_blank');
+        }
 
-        // --- LOGIK SIMPAN DATA ---
+        function previewDataArkib() {
+            window.open(URL_SHEETS_ARKIB, '_blank');
+        }
 
-        async function saveToSheets() {
-            const tajuk = document.getElementById('input-tajuk').value;
-            const tahun = document.getElementById('input-tahun').value;
-            const meter = document.getElementById('input-meter').value;
-            const cadangan = document.getElementById('select-cadangan').value;
+        // --- CAMERA MAIN ---
+        btnStart.addEventListener('click', async () => {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                video.srcObject = stream;
+                btnStart.classList.add('hidden');
+                btnSnap.classList.remove('hidden');
+                cameraPlaceholder.classList.add('hidden');
+                cameraOverlay.classList.remove('hidden');
+            } catch (err) { alert("Akses kamera dinafikan."); }
+        });
 
-            if(!tajuk) { alert("Tajuk tidak boleh kosong."); return; }
+        btnSnap.addEventListener('click', () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            prosesOCR(canvas.toDataURL('image/jpeg'));
+            stopCamera();
+        });
 
+        function stopCamera() {
+            if(stream) stream.getTracks().forEach(t => t.stop());
+            btnStart.classList.remove('hidden');
+            btnSnap.classList.add('hidden');
+            cameraPlaceholder.classList.remove('hidden');
+            cameraOverlay.classList.add('hidden');
+            video.srcObject = null;
+        }
+
+        // --- UPLOAD HANDLERS ---
+        fileInputMain.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => prosesOCR(event.target.result);
+                reader.readAsDataURL(file);
+            }
+        });
+
+        fileInputArkib.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => prosesOCRArkib(event.target.result);
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // --- NAVIGATION ---
+        function openArkib2() {
+            stopCamera();
+            mainView.classList.add('hidden');
+            arkib2View.classList.remove('hidden');
+            window.scrollTo(0,0);
+        }
+
+        function closeArkib2() {
+            stopArkibCamera();
+            arkib2View.classList.add('hidden');
+            mainView.classList.remove('hidden');
+        }
+
+        // --- ARKIB CAMERA ---
+        btnArkibCameraTrigger.addEventListener('click', async () => {
+            try {
+                arkibStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                arkibVideo.srcObject = arkibStream;
+                arkibVideo.classList.remove('hidden');
+                btnArkibSnap.classList.remove('hidden');
+                arkibPlaceholder.classList.add('hidden');
+                btnArkibCameraTrigger.classList.add('opacity-50', 'pointer-events-none');
+            } catch (err) { alert("Gagal buka kamera arkib."); }
+        });
+
+        btnArkibSnap.addEventListener('click', () => {
+            canvas.width = arkibVideo.videoWidth;
+            canvas.height = arkibVideo.videoHeight;
+            canvas.getContext('2d').drawImage(arkibVideo, 0, 0);
+            prosesOCRArkib(canvas.toDataURL('image/jpeg'));
+            stopArkibCamera();
+        });
+
+        function stopArkibCamera() {
+            if(arkibStream) arkibStream.getTracks().forEach(t => t.stop());
+            arkibVideo.classList.add('hidden');
+            btnArkibSnap.classList.add('hidden');
+            arkibPlaceholder.classList.remove('hidden');
+            btnArkibCameraTrigger.classList.remove('opacity-50', 'pointer-events-none');
+        }
+
+        // --- OCR HELPERS ---
+        function extractMeterValue(text) {
+            const meterPattern = /(\d+(\.\d+)?)\s*(M|METER|METRE)?\b/i;
+            const match = text.match(meterPattern);
+            return match ? match[1] : null;
+        }
+
+        // --- OCR MAIN ---
+        function prosesOCR(source) {
             statusContainer.classList.remove('hidden');
-            statusText.innerText = "Menyimpan ke Rekod...";
-
-            const params = new URLSearchParams({
-                action: 'saveRekod',
-                tajuk: tajuk,
-                tahun: tahun,
-                meter: meter,
-                cadangan: cadangan
-            });
-
-            fetch(URL_WEB_APP, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: params
-            })
-            .then(() => {
-                alert("Rekod Utama Berjaya Disimpan!");
-                statusContainer.classList.add('hidden');
-                resetForm();
-            })
-            .catch(err => {
-                console.error(err);
-                alert("Ralat penghantaran Rekod.");
-                statusContainer.classList.add('hidden');
+            statusText.innerText = "Mengecam teks...";
+            Tesseract.recognize(source, 'msa+eng').then(({ data: { text } }) => {
+                const cleanedText = text.replace(/\n/g, ' ').toUpperCase().trim();
+                document.getElementById('input-tajuk').value = cleanedText.substring(0, 150);
+                const meterVal = extractMeterValue(cleanedText);
+                if(meterVal) {
+                    document.getElementById('input-meter').value = meterVal;
+                }
+                const years = cleanedText.match(/\b(19|20)\d{2}\b/g);
+                if(years && years[0]) {
+                    document.getElementById('input-tahun').value = years[0];
+                }
+                statusText.innerText = "Selesai!";
+                setTimeout(() => statusContainer.classList.add('hidden'), 2000);
             });
         }
 
+        // --- OCR ARKIB 2 ---
+        function prosesOCRArkib(source) {
+            statusContainer.classList.remove('hidden');
+            statusText.innerText = "Mengecam borang...";
+            Tesseract.recognize(source, 'msa+eng').then(({ data: { text } }) => {
+                const cleanedText = text.replace(/\n/g, ' ').toUpperCase().trim();
+                const tajukInput = document.getElementById('arkib-tajuk-siri');
+                if (cleanedText.length > 0) {
+                    tajukInput.value = cleanedText.substring(0, 200);
+                }
+                const meterInput = document.getElementById('arkib-meter');
+                const meterVal = extractMeterValue(cleanedText);
+                if(meterVal) {
+                    meterInput.value = meterVal;
+                }
+                const years = cleanedText.match(/\b(19|20)\d{2}\b/g);
+                if(years) {
+                    if(years[0]) document.getElementById('arkib-tahun-dari').value = years[0];
+                    if(years[1]) document.getElementById('arkib-tahun-ke').value = years[1];
+                }
+                statusText.innerText = "Data Arkib Diterima!";
+                setTimeout(() => statusContainer.classList.add('hidden'), 2000);
+            });
+        }
+
+        // --- FORM HELPERS ---
+        function resetForm() {
+            document.getElementById('input-tajuk').value = "";
+            document.getElementById('input-tahun').value = "";
+            document.getElementById('input-meter').value = "";
+            document.getElementById('select-cadangan').value = "";
+            fileInputMain.value = "";
+        }
+
+        function copyAllData() {
+            const t = document.getElementById('input-tajuk').value;
+            const y = document.getElementById('input-tahun').value;
+            const m = document.getElementById('input-meter').value;
+            const c = document.getElementById('select-cadangan').value;
+            navigator.clipboard.writeText(`TAJUK: ${t}\nTAHUN: ${y}\nMETER: ${m}\nCADANGAN: ${c}`);
+            alert("Teks Utama Disalin!");
+        }
+
+        function resetArkibForm() {
+            document.getElementById('arkib-bil').value = "";
+            document.getElementById('arkib-tajuk-siri').value = "";
+            document.getElementById('arkib-tahun-dari').value = "";
+            document.getElementById('arkib-tahun-ke').value = "";
+            document.getElementById('arkib-tempoh').value = "";
+            document.getElementById('arkib-unit').value = "";
+            document.getElementById('arkib-meter').value = "";
+            fileInputArkib.value = "";
+        }
+
+        function copyArkibData() {
+            const data = `BIL: ${document.getElementById('arkib-bil').value}\n` +
+                         `TAJUK SIRI: ${document.getElementById('arkib-tajuk-siri').value}\n` +
+                         `TAHUN: ${document.getElementById('arkib-tahun-dari').value}-${document.getElementById('arkib-tahun-ke').value}\n` +
+                         `TEMPOH: ${document.getElementById('arkib-tempoh').value}\n` +
+                         `UNIT: ${document.getElementById('arkib-unit').value}\n` +
+                         `METER: ${document.getElementById('arkib-meter').value}`;
+            navigator.clipboard.writeText(data);
+            alert("Data Arkib 2 Disalin!");
+        }
+
+        // --- SIMPAN DATA ---
         function saveArkib2() {
             const bil = document.getElementById('arkib-bil').value;
             const tajuk = document.getElementById('arkib-tajuk-siri').value;
@@ -382,119 +547,59 @@
                 meter: meter
             });
 
-            fetch(URL_WEB_APP, {
+            fetch(URL_WEB_APP_ARKIB2, {
                 method: 'POST',
                 mode: 'no-cors',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: params
             })
             .then(() => {
-                alert("Data Arkib 2 Berjaya Disimpan!");
+                alert("Data Arkib 2 Berjaya Dihantar!");
                 statusContainer.classList.add('hidden');
                 resetArkibForm();
                 closeArkib2();
             })
             .catch(err => {
-                console.error(err);
                 alert("Ralat penghantaran Arkib 2.");
                 statusContainer.classList.add('hidden');
             });
         }
 
-        // --- KAMERA & OCR ---
-        btnStart.addEventListener('click', async () => {
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                video.srcObject = stream;
-                btnStart.classList.add('hidden');
-                btnSnap.classList.remove('hidden');
-                cameraPlaceholder.classList.add('hidden');
-            } catch (err) { alert("Kamera tidak dapat diakses."); }
-        });
+        async function saveToSheets() {
+            const tajuk = document.getElementById('input-tajuk').value;
+            const tahun = document.getElementById('input-tahun').value;
+            const meter = document.getElementById('input-meter').value;
+            const cadangan = document.getElementById('select-cadangan').value;
 
-        btnSnap.addEventListener('click', () => {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
-            prosesOCR(canvas.toDataURL('image/jpeg'));
-            if(stream) stream.getTracks().forEach(t => t.stop());
-            video.srcObject = null;
-            btnStart.classList.remove('hidden');
-            btnSnap.classList.add('hidden');
-            cameraPlaceholder.classList.remove('hidden');
-        });
+            if(!tajuk) { alert("Tajuk tidak boleh kosong."); return; }
 
-        function prosesOCR(source) {
             statusContainer.classList.remove('hidden');
-            statusText.innerText = "Mengecam teks...";
-            Tesseract.recognize(source, 'msa+eng').then(({ data: { text } }) => {
-                const cleanedText = text.replace(/\n/g, ' ').toUpperCase().trim();
-                document.getElementById('input-tajuk').value = cleanedText.substring(0, 150);
-                statusText.innerText = "Selesai!";
-                setTimeout(() => statusContainer.classList.add('hidden'), 2000);
+            statusText.innerText = "Menyimpan ke Rekod...";
+
+            const params = new URLSearchParams({
+                action: 'saveRekod',
+                tajuk: tajuk,
+                tahun: tahun,
+                meter: meter,
+                cadangan: cadangan
+            });
+
+            fetch(URL_WEB_APP_REKOD, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: params
+            })
+            .then(() => {
+                alert("Rekod Berjaya Dihantar!");
+                statusContainer.classList.add('hidden');
+                resetForm();
+            })
+            .catch(err => {
+                alert("Ralat penghantaran Rekod.");
+                statusContainer.classList.add('hidden');
             });
         }
-
-        // --- NAVIGATION & RESET ---
-        function resetForm() {
-            document.getElementById('input-tajuk').value = "";
-            document.getElementById('input-tahun').value = "";
-            document.getElementById('input-meter').value = "";
-            document.getElementById('select-cadangan').value = "";
-        }
-
-        function resetArkibForm() {
-            document.getElementById('arkib-bil').value = "";
-            document.getElementById('arkib-tajuk-siri').value = "";
-            document.getElementById('arkib-tahun-dari').value = "";
-            document.getElementById('arkib-tahun-ke').value = "";
-            document.getElementById('arkib-tempoh').value = "";
-            document.getElementById('arkib-unit').value = "";
-            document.getElementById('arkib-meter').value = "";
-        }
-
-        function openArkib2() { mainView.classList.add('hidden'); arkib2View.classList.remove('hidden'); }
-        function closeArkib2() { arkib2View.classList.add('hidden'); mainView.classList.remove('hidden'); }
-
-        function copyAllData() {
-            const t = document.getElementById('input-tajuk').value;
-            const y = document.getElementById('input-tahun').value;
-            const m = document.getElementById('input-meter').value;
-            const c = document.getElementById('select-cadangan').value;
-            navigator.clipboard.writeText(`TAJUK: ${t}\nTAHUN: ${y}\nMETER: ${m}\nCADANGAN: ${c}`);
-            alert("Teks Utama Disalin!");
-        }
-
-        function copyArkibData() {
-            const data = `BIL: ${document.getElementById('arkib-bil').value}\n` +
-                         `TAJUK SIRI: ${document.getElementById('arkib-tajuk-siri').value}\n` +
-                         `TAHUN: ${document.getElementById('arkib-tahun-dari').value}-${document.getElementById('arkib-tahun-ke').value}\n` +
-                         `TEMPOH: ${document.getElementById('arkib-tempoh').value}\n` +
-                         `UNIT: ${document.getElementById('arkib-unit').value}\n` +
-                         `METER: ${document.getElementById('arkib-meter').value}`;
-            navigator.clipboard.writeText(data);
-            alert("Data Arkib 2 Disalin!");
-        }
-
-        btnArkibCameraTrigger.addEventListener('click', async () => {
-            try {
-                arkibStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                arkibVideo.srcObject = arkibStream;
-                arkibVideo.classList.remove('hidden');
-                btnArkibSnap.classList.remove('hidden');
-                arkibPlaceholder.classList.add('hidden');
-            } catch (err) { alert("Gagal buka kamera arkib."); }
-        });
-
-        btnArkibSnap.addEventListener('click', () => {
-            canvas.width = arkibVideo.videoWidth;
-            canvas.height = arkibVideo.videoHeight;
-            canvas.getContext('2d').drawImage(arkibVideo, 0, 0);
-            if(arkibStream) arkibStream.getTracks().forEach(t => t.stop());
-            arkibVideo.classList.add('hidden');
-            btnArkibSnap.classList.add('hidden');
-            arkibPlaceholder.classList.remove('hidden');
-        });
     </script>
 </body>
 </html>
